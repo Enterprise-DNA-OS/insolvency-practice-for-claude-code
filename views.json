@@ -2,12 +2,52 @@
   {
     "name": "week",
     "title": "This week",
-    "subtitle": "Insolvency Practice for Claude Code: what needs attention, rendered by npm run view",
+    "subtitle": "What needs a person: overdue statutory steps, meetings, proofs waiting, quiet files",
     "sections": [
       {
         "title": "Needs attention",
-        "note": "TODO(author): point this at the industry's attention view (overdue, stuck, quiet).",
-        "sql": "select 'replace me' as item, 'TODO(author)' as why"
+        "note": "From v_attention. Days are counted from the date shown; negative means still to come.",
+        "sql": "select ref, owner, item, detail, date, days from v_attention order by days desc nulls last"
+      },
+      {
+        "title": "Open tasks",
+        "sql": "select a.ref, t.title, t.owner, t.due_on from tasks t join appointments a on a.id = t.appointment_id where t.done_on is null order by t.due_on nulls last"
+      }
+    ]
+  },
+  {
+    "name": "deadlines",
+    "title": "Statutory calendar",
+    "subtitle": "Every statutory step on every open file, with the rule it comes from",
+    "sections": [
+      {
+        "title": "Not yet done",
+        "note": "Rules and sources: docs/compliance.md. Business and working days skip the holidays in the holidays table.",
+        "sql": "select ref, company_name as company, manager, step, due_on, state, source from v_deadlines where done_on is null order by due_on"
+      },
+      {
+        "title": "Done",
+        "sql": "select ref, step, due_on, done_on, state, reference from v_deadlines where done_on is not null order by done_on desc"
+      }
+    ]
+  },
+  {
+    "name": "money",
+    "title": "Money and claims",
+    "subtitle": "Cash held on each file, claims by class, and remuneration against approval",
+    "sections": [
+      {
+        "title": "Cash position",
+        "sql": "select ref, company_name as company, manager, currency, receipts_cents, payments_cents, dividends_cents, cash_held_cents, assets_to_realise from v_position where status = 'open' order by cash_held_cents desc"
+      },
+      {
+        "title": "Claims by class",
+        "note": "Lower classes are paid only once every class above them is paid in full.",
+        "sql": "select ref, class, admitted_proofs, lodged_proofs, currency, admitted_cents, paid_cents from v_classes order by ref, rank"
+      },
+      {
+        "title": "Remuneration",
+        "sql": "select ref, manager, currency, approved_cents, drawn_cents, time_cost_cents from v_remuneration where status = 'open' order by ref"
       }
     ]
   }

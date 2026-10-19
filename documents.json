@@ -1,11 +1,34 @@
 [
   {
-    "name": "example",
-    "title": "TODO(author): the first document this industry must produce",
-    "for_each": "select gen_random_uuid() as id, 'Example' as name",
+    "name": "receipts-and-payments",
+    "title": "Summary of receipts and payments",
+    "for_each": "select id, ref || ' ' || company_name as name from appointments order by ref",
     "file": "name",
     "sections": [
-      { "title": "Details", "sql": "select 'replace me' as item, $1::text as record_id" }
+      { "title": "Summary", "sql": "select a.company_name as company, a.company_number, a.practitioner, a.appointed_on, p.currency, p.receipts_cents, p.payments_cents, p.dividends_cents, p.cash_held_cents from v_position p join appointments a on a.id = p.appointment_id where p.appointment_id = $1" },
+      { "title": "Receipts", "sql": "select l.occurred_on as date, l.category, l.description, a.currency, l.amount_cents from ledger l join appointments a on a.id = l.appointment_id where l.appointment_id = $1 and l.kind = 'receipt' order by l.occurred_on" },
+      { "title": "Payments", "sql": "select l.occurred_on as date, l.category, l.payee, l.description, a.currency, l.amount_cents from ledger l join appointments a on a.id = l.appointment_id where l.appointment_id = $1 and l.kind = 'payment' order by l.occurred_on" },
+      { "title": "Dividends paid", "sql": "select l.occurred_on as date, l.payee as creditor, l.description, a.currency, l.amount_cents from ledger l join appointments a on a.id = l.appointment_id where l.appointment_id = $1 and l.kind = 'dividend' order by l.occurred_on, l.payee" }
+    ]
+  },
+  {
+    "name": "dividend-schedule",
+    "title": "Dividend schedule",
+    "for_each": "select d.id, a.ref || ' ' || d.class || ' ' || coalesce(d.declared_on::text, 'not declared') as name from dividends d join appointments a on a.id = d.appointment_id order by a.ref, d.notice_on",
+    "file": "name",
+    "sections": [
+      { "title": "Dividend", "sql": "select a.company_name as company, d.class, d.notice_on, d.proofs_close_on, d.declared_on, a.currency, d.pool_cents, d.cents_in_dollar from dividends d join appointments a on a.id = d.appointment_id where d.id = $1" },
+      { "title": "Paid to each creditor", "sql": "select l.payee as creditor, p.admitted_cents, a.currency, l.amount_cents from ledger l join proofs p on p.id = l.proof_id join appointments a on a.id = l.appointment_id where l.dividend_id = $1 order by l.payee" }
+    ]
+  },
+  {
+    "name": "creditor-schedule",
+    "title": "Schedule of creditors and proofs",
+    "for_each": "select id, ref || ' ' || company_name as name from appointments order by ref",
+    "file": "name",
+    "sections": [
+      { "title": "Proofs by class", "note": "Admitted amounts rank for dividends in class order.", "sql": "select c.name as creditor, p.class, p.status, p.lodged_on, a.currency, p.claimed_cents, p.admitted_cents, p.reason from proofs p join creditors c on c.id = p.creditor_id join appointments a on a.id = p.appointment_id where p.appointment_id = $1 order by p.class, c.name" },
+      { "title": "Creditors with no proof", "sql": "select c.name as creditor, c.kind, a.currency, c.per_records_cents from creditors c join appointments a on a.id = c.appointment_id where c.appointment_id = $1 and not exists (select 1 from proofs p where p.creditor_id = c.id) order by c.name" }
     ]
   }
 ]

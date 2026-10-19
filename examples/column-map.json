@@ -1,0 +1,9 @@
+{
+  "_": "Rename the columns your Turnkey IPS report uses. Each key is a field here; each value is one heading or a list of headings to try.",
+  "name": ["Creditor Name", "Creditor"],
+  "per_records": ["Amount per Records", "RATA Amount"],
+  "claimed": ["Amount Claimed"],
+  "status": ["POD Status"],
+  "lodged": ["Date Received"],
+  "class": ["Priority"]
+}
