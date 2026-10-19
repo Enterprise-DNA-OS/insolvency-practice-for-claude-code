@@ -237,7 +237,7 @@ export async function compliance(db) {
     add(p.ref, 'proof adjudication', by < today() ? 'breach' : 'due', `${p.name} (${p.class}): admit or reject by ${by}`, r.source);
   }
   for (const a of await db.query(`select ref from appointments where jurisdiction = 'NZ' and status = 'open' and trim(practitioner_licence) = ''`)) {
-    add(a.ref, 'licensed practitioner', 'due', 'No licence number recorded for the appointed practitioner', 'Insolvency Practitioners Regulation Act 2019 (NZ) s 6');
+    add(a.ref, 'licensed practitioner', 'due', 'No licence number recorded for the appointed practitioner', 'Insolvency Practitioners Regulation Act 2019 (NZ); Companies Act 1993 s 280');
   }
   const order = { breach: 0, due: 1, note: 2 };
   return rows.sort((a, b) => order[a.severity] - order[b.severity] || a.ref.localeCompare(b.ref));
